@@ -202,21 +202,25 @@ void BufferCache::ReadMemory(VAddr device_addr, u64 size, bool is_write, bool as
 }
 
 void BufferCache::MarkCpuModifiedAfterReadback(VAddr device_addr, u64 size) {
-    // sotc: a write fault after its readback. The page tracker is page granular and can still
-    // mark these pages GPU-modified with nothing left to read back (the ranges were taken out of
-    // the modified set, e.g. by ReleaseMemory, without clearing the tracker): marking them
-    // CPU-modified then asked for a write-only protection, which the host does not have (the
-    // page_manager "write-only" assertion). When no GPU data is left on these pages, clear the
-    // stale GPU bits in the same step.
-    const VAddr lo = Common::AlignDown(device_addr, VAddr{4096});
-    const VAddr hi = Common::AlignUp(device_addr + size, VAddr{4096});
-    bool gpu_data = false;
-    gpu_modified_ranges.ForEachInRange(lo, hi - lo, [&](VAddr, VAddr) { gpu_data = true; });
-    if (gpu_data) {
-        memory_tracker->MarkRegionAsCpuModified(device_addr, size);
-    } else {
-        memory_tracker->UnmarkRegionAsGpuModified(device_addr, size, true);
+    // sotc: a write fault after its readback. A page both CPU- and GPU-modified keeps its read
+    // watcher but loses its write watcher, a "write-only" protection the host does not have (the
+    // page_manager assertion). The tracker can still mark these pages GPU-modified for two
+    // reasons: GPU data recorded since the readback (left protected: the write faults again and
+    // the next readback brings it), or a page bit no GPU-written byte backs any more, e.g. after
+    // ReleaseMemory (cleared, or the write would fault forever). After Oussama268's 9afd8e5.
+    if (memory_tracker->IsRegionGpuModified(device_addr, size)) {
+        const VAddr lo = Common::AlignDown(device_addr, VAddr{4096});
+        const VAddr hi = Common::AlignUp(device_addr + size, VAddr{4096});
+        bool gpu_data = false;
+        gpu_modified_ranges.ForEachInRange(lo, hi - lo, [&](VAddr, VAddr) { gpu_data = true; });
+        if (gpu_data) {
+            SotcStats::write_fault_gpu_pending.fetch_add(1, std::memory_order_relaxed);
+            return;
+        }
+        SotcStats::write_fault_stale_gpu.fetch_add(1, std::memory_order_relaxed);
+        memory_tracker->UnmarkRegionAsGpuModified(lo, hi - lo, false);
     }
+    memory_tracker->MarkRegionAsCpuModified(device_addr, size);
 }
 
 void BufferCache::BeginAsyncReadback(AsyncReadback& readback) {

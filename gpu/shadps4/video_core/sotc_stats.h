@@ -69,6 +69,8 @@ inline std::atomic<uint64_t> vram_used{0}, vram_budget{0}, arena_allocs{0}, aren
 inline std::atomic<uint64_t> gc_ticks{0}, gc_freed{0}, gc_downloads{0};
 inline std::atomic<uint64_t> cached_images{0}, cached_image_bytes{0};
 inline std::atomic<uint64_t> vram_emergency{0}; ///< emergency texture collections (allocation failed)
+inline std::atomic<uint64_t> write_fault_gpu_pending{0}; ///< write-fault readbacks left protected
+inline std::atomic<uint64_t> write_fault_stale_gpu{0};   ///< ... that cleared a stale GPU page bit
 inline std::atomic<uint64_t> image_bytes{0};    ///< live texture cache and host pass images
 inline std::atomic<uint64_t> image_count{0};
 inline std::atomic<uint64_t> gc_kept_tiled{0};  ///< GC candidates kept: GPU-written tiled images
