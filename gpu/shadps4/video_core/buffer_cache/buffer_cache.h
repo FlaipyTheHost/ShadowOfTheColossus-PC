@@ -284,6 +284,7 @@ private:
     bool clean_pages_used = false;
     std::atomic<u64> clean_map_generation{};
     void AddGpuModified(VAddr addr, u64 size);
+    void MarkCpuModifiedAfterReadback(VAddr device_addr, u64 size);
 
     /// GPU writes recorded into the command buffer still being built (tick current_writes_tick).
     RangeSet current_writes;
