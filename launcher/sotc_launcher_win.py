@@ -336,11 +336,16 @@ def game_environment(s):
         env['SOTC_FLUSH_EVERY'], env['SOTC_RB_AHEAD'] = '0', '0'
     env['SOTC_NEO'] = '1' if s.get('neo') else '0'
     env['SOTC_OUTPUT_RES'] = s.get('output_res') or '1920x1080'
-    # The game renders at the output size (sotc.py scales it down above about 4.2 million pixels; the
-    # upscaler takes it to the output). 720p renders at 1080p, as on PS4; the PS4 Pro path keeps its
-    # own sizes.
+    # Outputs wider than 16:9 (21:9, 32:9): the game renders at that aspect, a wider view (sotc.py
+    # keeps it at most 1080 lines; the upscaler takes it to the output). 16:9 and narrower outputs
+    # render at 1080p as before: rendering 1440p or 4K natively would cost frame rate for no wider
+    # view. The PS4 Pro path keeps its own sizes.
     output = env['SOTC_OUTPUT_RES']
-    if output not in ('1280x720', '1920x1080') and not s.get('neo'):
+    try:
+        out_w, out_h = map(int, output.split('x'))
+    except ValueError:
+        out_w, out_h = 16, 9
+    if out_w * 9 > out_h * 16 * 1.01 and not s.get('neo'):
         env['SOTC_RENDER_RES'] = output
     env['BB_FSR1'] = '1' if s.get('upscaler', 'fsr1') == 'fsr1' else '0'
     if s.get('sharpness') == 'off':
@@ -817,13 +822,11 @@ class Launcher:
                      'Removes the game\'s 30 FPS cap; vblank at 120 Hz. Measured 38 FPS in the open world, ~25 at the temple.'))
         self.section(f, _('Resolução', 'Resolution'))
         self.row(f, _('Saída', 'Output'), self.choice(f, 'output_res', OUTPUTS),
-                 _('O jogo renderiza nesse tamanho; acima de cerca de 4,2 milhões de pixels (4K, 3440 × 1440) num '
-                   'tamanho menor, que o upscaler amplia: maior que isso, os detalhes finos das texturas somem. '
+                 _('Em 16:9 o jogo renderiza em 1080p e o upscaler amplia para a saída. '
                    'Mais largo que 16:9 (21:9, 32:9) mostra mais dos lados (Hor+), sem esticar; menus e vídeos '
                    'podem ficar esticados. 720p renderiza em 1080p; o modo PS4 Pro usa os tamanhos do Pro. '
                    'Num monitor menor que a saída, a janela cabe na tela e a tela cheia usa o monitor todo.',
-                   'The game renders at this size; above about 4.2 million pixels (4K, 3440 × 1440) at a smaller '
-                   'size that the upscaler enlarges: larger than that, the fine texture detail disappears. Wider '
+                   'At 16:9 the game renders at 1080p and the upscaler takes it to the output. Wider '
                    'than 16:9 (21:9, 32:9) shows more at the sides (Hor+), not stretched; menus and videos may '
                    'look stretched. 720p renders at 1080p; PS4 Pro mode uses the Pro sizes. On a monitor smaller '
                    'than the output the window fits the screen and fullscreen uses the whole monitor.'))
