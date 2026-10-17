@@ -633,8 +633,19 @@ struct SignalImpl : public PageManager::Impl {
         RENDERER_TRACE;
         auto* memory = Core::Memory::Instance();
         auto& impl = memory->GetAddressSpace();
-        ASSERT_MSG(perms != Core::MemoryPermission::Write,
-                   "Attempted to protect region as write-only which is not a valid permission");
+        if (perms == Core::MemoryPermission::Write) {
+            // sotc: GPU data not read back yet (read tracked) on a page whose writes are not
+            // tracked. The host has no write-only protection and this asserted. No access at all
+            // is the stricter choice: a write fault flushes the GPU data and unprotects the page
+            // through the usual invalidation, a read fault reads it back as for a read-protected
+            // page.
+            static std::atomic<u32> reported{0};
+            if (reported.fetch_add(1, std::memory_order_relaxed) < 8) {
+                LOG_WARNING(Render, "Write-only protection of {:#x}+{:#x} applied as no access",
+                            address, size);
+            }
+            perms = Core::MemoryPermission::None;
+        }
         // sotc: the walker's clean-load bitmap follows the read protection: set before
         // protecting, cleared after unprotecting (a stale bit only costs a clean load).
         const bool read_protected = False(perms & Core::MemoryPermission::Read);
