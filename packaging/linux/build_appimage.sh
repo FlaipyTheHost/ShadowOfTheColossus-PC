@@ -3,8 +3,9 @@
 #   bash packaging/linux/build_ffmpeg.sh   (once: minimal FFmpeg, see that script)
 #   ./build.sh
 #   bash packaging/linux/build_appimage.sh
-# The AppImage carries the loader, the GPU library, the preparation scripts, the launcher with
-# this machine's Python and Tcl/Tk (so the host needs neither) and every library they use except
+# The AppImage carries the loader, the GPU library, the preparation scripts, the gamepad launcher
+# (out/sotc-launcher, when built), the Windows launcher with this machine's Python and Tcl/Tk (so
+# the host needs neither) and every library they use except
 # the base system every desktop has (glibc, libstdc++, the Vulkan loader, fontconfig and
 # freetype, which read the host's own font setup). It never contains game or Sony files: the
 # user points it at their own dump and sound modules on first start (packaging/linux/AppRun).
@@ -34,6 +35,13 @@ install -m644 launcher/sotc_launcher_win.py launcher/sotc_discovery.py launcher/
 install -m755 out/bb-probe out/bb-gpu-capabilities "$app/bin/"
 install -m755 out/gpu/libbbgpu.so "$app/bin/gpu/"
 strip --strip-debug "$app/bin/bb-probe" "$app/bin/bb-gpu-capabilities" "$app/bin/gpu/libbbgpu.so"
+# The gamepad launcher (launcher/linux) and its font, when build.sh built it.
+if [[ -f out/sotc-launcher ]]; then
+    install -m755 out/sotc-launcher "$app/bin/"
+    strip --strip-debug "$app/bin/sotc-launcher"
+    mkdir -p "$app/bin/fonts"
+    install -m644 gpu/third_party/fonts/DejaVuSans.ttf gpu/third_party/fonts/LICENSE-DejaVu.txt "$app/bin/fonts/"
+fi
 
 # The launcher's Python: this machine's interpreter with its standard library (compiled modules
 # kept valid by cp -a) and Tcl/Tk. It finds the library next to itself (lib/python3.X).
@@ -68,6 +76,7 @@ bundle() {
     done < <(ldd "$@" | awk '$2 == "=>" && $3 ~ /^\// {print $1, $3}' | sort -u)
 }
 bundle out/bb-probe out/bb-gpu-capabilities out/gpu/libbbgpu.so
+if [[ -f out/sotc-launcher ]]; then bundle out/sotc-launcher; fi
 count=$(find "$app/lib" -type f | wc -l)
 if (( count > 25 )); then
     echo "Warning: $count bundled libraries; the system FFmpeg pulls in many. For a small, portable" >&2
@@ -81,6 +90,7 @@ patchelf --set-rpath '$ORIGIN/../lib' "$app/bin/bb-gpu-capabilities"
 patchelf --set-rpath '$ORIGIN/../../lib' "$app/bin/gpu/libbbgpu.so"
 patchelf --set-rpath '$ORIGIN/../../lib' "$python/bin/python3"
 for module in "$stdlib"/lib-dynload/*.so; do patchelf --set-rpath '$ORIGIN/../../../../lib' "$module"; done
+if [[ -f $app/bin/sotc-launcher ]]; then patchelf --set-rpath '$ORIGIN/../lib' "$app/bin/sotc-launcher"; fi
 for library in "$app"/lib/*; do patchelf --set-rpath '$ORIGIN' "$library"; done
 
 install -m644 launcher/sotc.png "$appdir/sotc-pc.png"

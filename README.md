@@ -138,17 +138,26 @@ On NVIDIA or Intel, please open an issue with the result, your GPU model, driver
 
 ```
 chmod +x SotC-PC-*-linux-x86_64.AppImage
-./SotC-PC-*-linux-x86_64.AppImage            # the launcher: settings, then Play
+./SotC-PC-*-linux-x86_64.AppImage            # the gamepad launcher: settings, then Play
+./SotC-PC-*-linux-x86_64.AppImage --classic  # the same launcher as on Windows (Tk)
 ./SotC-PC-*-linux-x86_64.AppImage --play     # the game with the launcher's settings (Steam launch options)
-./SotC-PC-*-linux-x86_64.AppImage --setup    # without the launcher: picks the game and sound folders again
+./SotC-PC-*-linux-x86_64.AppImage --setup    # without a launcher: picks the game and sound folders again
 ```
 
-- The AppImage opens the same launcher as on Windows (FPS, PS4 Pro mode, upscaler, textures,
-  controls, saves...), with its own Python and Tk inside: nothing to install. Without a display
-  (a terminal, SSH) it starts the game from `sotc.ini` as before. A `sotc.ini` written by hand
-  is read into the launcher on its first start.
+- By default the AppImage opens a Steam-style launcher with the Windows launcher's options that
+  works with a **gamepad** as well as mouse and keyboard: D-pad/stick moves, ✕/A selects, ○/B
+  goes back, □/X clears a folder, L1/R1 (LB/RB) switch tabs and Options/Start plays. On first
+  start it looks for the game, shadPS4's sound modules and the DLC by itself. It opens
+  fullscreen on Steam Deck and gamescope, and runs natively on Wayland; **Advanced › Add to the
+  applications menu** makes an entry Steam can add as a non-Steam game.
+- `--classic` opens the same launcher as on Windows (FPS, PS4 Pro mode, upscaler, textures,
+  controls, saves...) instead, through X11 or XWayland. A `sotc.ini` written by hand is read into
+  either launcher on its first start. `--play` uses the gamepad launcher's settings once it has
+  been used, else the Windows launcher's.
+- Both launchers run the game with the Python and Tk inside the AppImage: nothing to install.
+  Without a display (a terminal, SSH) it starts the game from `sotc.ini` as before.
 - Requirements: x86-64 Linux with glibc 2.38 or newer (Fedora 39+, Ubuntu 24.04+) and a Vulkan
-  1.3 driver (Mesa or NVIDIA). Works on Wayland (the launcher through XWayland) and X11.
+  1.3 driver (Mesa or NVIDIA). Works on Wayland and X11.
 - The sound modules are found automatically in shadPS4's folder (`~/.local/share/shadPS4/sys_modules`).
 - Settings, saves and the logs live in `~/.local/share/sotc-pc/`. The `sotc.ini` options
   (resolution, FSR, fullscreen, language, 60 FPS, controls) are listed in
@@ -202,7 +211,7 @@ sudo dnf install gcc gcc-c++ make cmake ninja-build pkgconf-pkg-config python3 p
     fmt-devel boost-devel robin-map-devel xxhash-devel zydis-devel libX11-devel
 git submodule update --init --recursive
 bash packaging/linux/build_ffmpeg.sh        # out/ffmpeg (uma vez / once)
-./build.sh                                  # out/bb-probe, out/gpu/libbbgpu.so
+./build.sh                                  # out/bb-probe, out/gpu/libbbgpu.so, out/sotc-launcher
 ./sotc.sh                                   # roda / runs (sotc.ini: SOTC_GAME_DIR, SOTC_SYS_MODULES)
 bash packaging/linux/build_appimage.sh      # dist/SotC-PC-<versão>-linux-x86_64.AppImage
 ```
@@ -226,10 +235,11 @@ bash packaging/linux/build_appimage.sh
 **NixOS:** `./build.sh` entra sozinho no / enters `shell.nix` by itself (FFmpeg do Nix / Nix's FFmpeg).
 
 Testes / tests: `./build.sh --test`. A AppImage leva o loader, a biblioteca de GPU, os scripts, o
-lançador com o Python e o Tcl/Tk da máquina de build e as bibliotecas que eles usam, menos o
-sistema base (glibc, libstdc++, loader do Vulkan, fontconfig, freetype) / The AppImage carries the
-loader, GPU library, scripts, the launcher with the build machine's Python and Tcl/Tk, and their
-libraries except the base system (glibc, libstdc++, Vulkan loader, fontconfig, freetype). Precisa de / needs `patchelf`; o `appimagetool` é baixado em /
+lançador com controle (`out/sotc-launcher`), o lançador do Windows com o Python e o Tcl/Tk da
+máquina de build e as bibliotecas que eles usam, menos o sistema base (glibc, libstdc++, loader do
+Vulkan, fontconfig, freetype) / The AppImage carries the loader, GPU library, scripts, the gamepad
+launcher (`out/sotc-launcher`), the Windows launcher with the build machine's Python and Tcl/Tk,
+and their libraries except the base system (glibc, libstdc++, Vulkan loader, fontconfig, freetype). Precisa de / needs `patchelf`; o `appimagetool` é baixado em /
 is downloaded into `out/tools` (ou / or `APPIMAGETOOL=<caminho / path>`).
 
 Packaging refuses any `.sprx`/`.prx`: Sony firmware never goes into the package. Test tools:

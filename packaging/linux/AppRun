@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Shadow of the Colossus PC (Linux AppImage).
-#   ./SotC-PC-x86_64.AppImage            the launcher (settings, then Play)
+#   ./SotC-PC-x86_64.AppImage            the gamepad launcher (gamepad, mouse or keyboard)
+#   ./SotC-PC-x86_64.AppImage --classic  the Windows launcher (Tk, needs X11 or XWayland)
 #   ./SotC-PC-x86_64.AppImage --play     the game with the launcher's settings, no window (Steam)
-#   ./SotC-PC-x86_64.AppImage --setup    without the launcher: chooses the game folder and the sound
+#   ./SotC-PC-x86_64.AppImage --setup    without a launcher: chooses the game folder and the sound
 #                                        modules again, kept in sotc.ini (also the start without a display)
 # Settings, prepared image, saves and the logs: ~/.local/share/sotc-pc
 set -uo pipefail
@@ -20,13 +21,26 @@ PYTHON="$APP/python/bin/python3"
 # Tcl/Tk's scripts of the bundled Tk, not those of a host Tcl of another version.
 export TCL_LIBRARY="$APP/python/tcl" TK_LIBRARY="$APP/python/tk"
 
+# Two launchers. The gamepad launcher (bin/sotc-launcher, SDL3: X11, Wayland and gamescope) is the
+# default; the Windows launcher (Tk, needs X11 or XWayland) with --classic, or when this AppImage
+# has no gamepad launcher. Both run sotc.py with the bundled Python: the gamepad launcher starts
+# python3 by name, so the bundled one goes first in PATH.
+LAUNCHER="$APP/bin/sotc-launcher"
+TK_LAUNCHER=("$PYTHON" "$APP/launcher/sotc_launcher_win.py")
+export PATH="$APP/python/bin:$PATH"
+
 case ${1:-} in
 --setup) ;;
---play) exec "$PYTHON" "$APP/launcher/sotc_launcher_win.py" "$@" ;;
-*) # Tk draws through X11 (XWayland on a Wayland desktop): without it, the start below.
-   if [[ -n ${DISPLAY:-} ]]; then
-       exec "$PYTHON" "$APP/launcher/sotc_launcher_win.py" "$@"
-   fi ;;
+--classic)
+    shift
+    if [[ -n ${DISPLAY:-} ]]; then exec "${TK_LAUNCHER[@]}" "$@"; fi ;;
+--play)
+    # The gamepad launcher's settings (launcher.ini) when it has been used, else the Tk launcher's.
+    if [[ -x $LAUNCHER && -f $SOTC_DATA_DIR/launcher.ini ]]; then shift; exec "$LAUNCHER" --play "$@"; fi
+    exec "${TK_LAUNCHER[@]}" "$@" ;;
+*) # Without a display (a terminal, SSH): the start below.
+    if [[ -x $LAUNCHER && ( -n ${WAYLAND_DISPLAY:-} || -n ${DISPLAY:-} ) ]]; then exec "$LAUNCHER" "$@"; fi
+    if [[ -n ${DISPLAY:-} ]]; then exec "${TK_LAUNCHER[@]}" "$@"; fi ;;
 esac
 
 has() { command -v "$1" >/dev/null 2>&1; }

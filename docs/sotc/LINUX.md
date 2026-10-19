@@ -15,6 +15,11 @@ aqui / On its first start the launcher reads what is already here (`SOTC_GAME_DI
 `SOTC_FPS_CAP`/`SOTC_FPS_LIMIT`). Sem tela (terminal, SSH) ou com `--setup`, vale só este arquivo /
 Without a display (terminal, SSH) or with `--setup`, only this file applies.
 
+O lançador com controle (`./SotC-PC-...AppImage`) grava os ajustes dele em / keeps its own settings in
+`~/.local/share/sotc-pc/launcher.ini` e os passa ao jogo como estas variáveis / and passes them to
+the game as these variables; `--play` joga com eles sem abrir a janela / plays with them without
+the window.
+
 ## Jogo e arquivos / Game and files
 
 | Opção / Option | Valor / Value |
