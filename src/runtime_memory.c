@@ -291,6 +291,9 @@ static int pool(void) {
     return backing_base ? 0 : -1;
 }
 #else
+/* sotc (Linux): live views are only split on Windows (placeholders above); the frame report
+ * (videoout/driver.cpp) still asks for the count. */
+uint64_t runtime_memory_carve_splits(void) { return 0; }
 /* Direct memory occupies [0,POOL_SIZE) of the memfd, flexible memory [POOL_SIZE,+FLEX_SPAN). */
 static int pool(void) {
     if (pool_fd>=0) return 0;

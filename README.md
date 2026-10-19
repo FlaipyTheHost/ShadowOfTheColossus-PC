@@ -272,11 +272,13 @@ GCC 13, SDL and Vulkan headers are too old:
 
 ```
 sudo apt install build-essential gcc-14 g++-14 cmake ninja-build pkg-config python3 git nasm \
-    patchelf libvulkan-dev glslang-tools libvulkan-memory-allocator-dev libfmt-dev libboost-dev \
+    patchelf libvulkan-dev glslang-tools libfmt-dev libboost-dev \
     libxxhash-dev libzydis-dev libx11-dev libxext-dev libwayland-dev libxkbcommon-dev \
     libpulse-dev libasound2-dev
-# SDL3, Vulkan-Headers e / and robin-map da fonte / from source (cmake + install):
-#   https://github.com/libsdl-org/SDL (release-3.2.x), https://github.com/KhronosGroup/Vulkan-Headers,
+# SDL3, Vulkan-Headers, VulkanMemoryAllocator (3.1+, o do Ubuntu é 3.0 / Ubuntu's is 3.0) e / and
+# robin-map da fonte / from source (cmake + install):
+#   https://github.com/libsdl-org/SDL (release-3.2.x), https://github.com/KhronosGroup/Vulkan-Headers
+#   (v1.4.357), https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator (v3.3.0),
 #   https://github.com/Tessil/robin-map
 bash packaging/linux/build_ffmpeg.sh
 CC=gcc-14 CXX=g++-14 CPATH=/usr/local/include ./build.sh
