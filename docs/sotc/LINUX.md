@@ -6,6 +6,11 @@ ambiente têm prioridade sobre o arquivo / environment variables take precedence
 (`BB_FULLSCREEN=0 ./SotC-PC-...AppImage`). São as mesmas que o lançador do Windows ajusta / the
 same ones the Windows launcher sets (`launcher/sotc_launcher_win.py`, `game_environment`).
 
+O lançador (`./SotC-PC-...AppImage`) grava os ajustes dele em / keeps its own settings in
+`~/.local/share/sotc-pc/launcher.ini` e os passa ao jogo como estas variáveis / and passes them to
+the game as these variables; `--play` joga com eles sem abrir a janela / plays with them without
+the window.
+
 ## Jogo e arquivos / Game and files
 
 | Opção / Option | Valor / Value |

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Shadow of the Colossus PC (Linux AppImage).
-#   ./SotC-PC-x86_64.AppImage            starts the game (asks for the game folder the first time)
+#   ./SotC-PC-x86_64.AppImage            the launcher (mouse, keyboard or gamepad)
+#   ./SotC-PC-x86_64.AppImage --play     the game with the launcher's settings, no window
+#                                        (Steam launch options); without them, asks for the folder
 #   ./SotC-PC-x86_64.AppImage --setup    chooses the game folder and the sound modules again
 # Settings, prepared image, saves and the log of the last run: ~/.local/share/sotc-pc
 set -uo pipefail
@@ -13,6 +15,19 @@ LOG="$SOTC_DATA_DIR/last_run.log"
 
 # Host libraries injected into every program (Steam overlay, ...) do not belong in the game.
 unset LD_PRELOAD
+
+# The launcher, unless a mode is asked for or there is no display (a terminal, SSH).
+LAUNCHER="$APP/bin/sotc-launcher"
+if [[ -x $LAUNCHER ]]; then
+    case ${1:-} in
+    --setup) ;;
+    --play)
+        if [[ -f $SOTC_DATA_DIR/launcher.ini ]]; then shift; exec "$LAUNCHER" --play "$@"; fi ;;
+    *)
+        if [[ -n ${WAYLAND_DISPLAY:-} || -n ${DISPLAY:-} ]]; then exec "$LAUNCHER" "$@"; fi ;;
+    esac
+fi
+[[ ${1:-} == --play ]] && shift
 
 has() { command -v "$1" >/dev/null 2>&1; }
 say() {   # message to the user: a window when started from the desktop, else the terminal

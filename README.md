@@ -110,9 +110,16 @@ versão do driver e o arquivo `~/.local/share/sotc-pc/last_run.log`.
 
 ```
 chmod +x SotC-PC-*-linux-x86_64.AppImage
-./SotC-PC-*-linux-x86_64.AppImage            # na primeira vez pede a pasta do jogo
-./SotC-PC-*-linux-x86_64.AppImage --setup    # escolhe de novo a pasta do jogo e a do som
+./SotC-PC-*-linux-x86_64.AppImage            # abre o lançador
+./SotC-PC-*-linux-x86_64.AppImage --play     # joga direto, com os ajustes do lançador
 ```
+
+- **Lançador** no estilo da Steam, com as mesmas opções do lançador do Windows, que funciona
+  com **controle** além de mouse e teclado: direcional/analógico navega, ✕/A seleciona,
+  ○/B volta, □/X limpa uma pasta, L1/R1 (LB/RB) troca de aba e Options/Start joga. Na primeira
+  vez ele procura sozinho o jogo, os módulos de som do shadPS4 e as DLCs. No Steam Deck abre em
+  tela cheia; em **Avançado › Criar atalho** ele entra no menu de aplicativos e pode ser
+  adicionado à Steam como jogo não-Steam (`--play` nas opções de inicialização pula o lançador).
 
 - Requisitos: Linux x86-64 com glibc 2.38 ou mais nova (Fedora 39+, Ubuntu 24.04+), `python3` e
   um driver Vulkan 1.3 (Mesa ou NVIDIA). Funciona em Wayland e X11.
@@ -202,9 +209,16 @@ On NVIDIA or Intel, please open an issue with the result, your GPU model, driver
 
 ```
 chmod +x SotC-PC-*-linux-x86_64.AppImage
-./SotC-PC-*-linux-x86_64.AppImage            # asks for the game folder the first time
-./SotC-PC-*-linux-x86_64.AppImage --setup    # picks the game and sound folders again
+./SotC-PC-*-linux-x86_64.AppImage            # opens the launcher
+./SotC-PC-*-linux-x86_64.AppImage --play     # plays straight away, with the launcher's settings
 ```
+
+- A Steam-style **launcher** with the Windows launcher's options that works with a **gamepad**
+  as well as mouse and keyboard: D-pad/stick moves, ✕/A selects, ○/B goes back, □/X clears a
+  folder, L1/R1 (LB/RB) switch tabs and Options/Start plays. On first start it looks for the
+  game, shadPS4's sound modules and the DLC by itself. It opens fullscreen on Steam Deck;
+  **Advanced › Add to the applications menu** makes an entry Steam can add as a non-Steam game
+  (`--play` in its launch options skips the launcher).
 
 - Requirements: x86-64 Linux with glibc 2.38 or newer (Fedora 39+, Ubuntu 24.04+), `python3`
   and a Vulkan 1.3 driver (Mesa or NVIDIA). Works on Wayland and X11.

@@ -15,6 +15,11 @@
 - `sotc.py` multiplataforma e com `SOTC_DATA_DIR`; `sotc.sh`; AppImage
   (`packaging/linux/build_appimage.sh`) que pede a pasta do jogo na primeira abertura e acha os
   módulos de som do shadPS4. Opções: `docs/sotc/LINUX.md`.
+- **Lançador para Linux** (`launcher/linux`, SDL3 + Dear ImGui): as opções do lançador do Windows
+  num visual no estilo da Steam, que funciona com controle (DualShock/DualSense mostram ✕ ○ □,
+  Xbox mostra A B X Y), mouse e teclado. Acha sozinho o jogo, o som e as DLCs; verifica a placa de
+  vídeo e a versão do eboot; remapeia o teclado; importa saves do shadPS4; cria o atalho do menu
+  (Steam: jogo não-Steam). `--play` joga sem a janela. É o que a AppImage abre por padrão.
 
 ## 0.57 — 2026-10-14
 - **Placas AMD: correção das cores verdes/rosas** na névoa, no Wander e no Agro (issues #6, #7, #9,

@@ -106,6 +106,25 @@ fi
 echo "Built $PWD/out/bb-probe"
 # GPU check for run.sh (live_resolution=auto): links only the Vulkan loader.
 "$CC" -std=c11 -O2 -Wall -Wextra -Werror tools/gpu_capabilities.c "${libraries[@]}" -o out/bb-gpu-capabilities
+# Linux launcher (launcher/linux): SDL3 + Dear ImGui, gamepad navigation. ImGui is compiled once
+# into out/launcher (third-party code, without -Werror).
+CXX=${CXX:-$(command -v c++ || command -v g++ || true)}
+if [[ -n $CXX ]]; then
+    imgui=gpu/third_party/imgui
+    mkdir -p out/launcher
+    for source in $imgui/imgui.cpp $imgui/imgui_draw.cpp $imgui/imgui_tables.cpp $imgui/imgui_widgets.cpp \
+                  $imgui/backends/imgui_impl_sdl3.cpp $imgui/backends/imgui_impl_sdlrenderer3.cpp; do
+        object=out/launcher/$(basename "${source%.cpp}").o
+        if [[ ! -f $object || $source -nt $object ]]; then
+            "$CXX" -std=c++20 -O2 -w -I$imgui "${includes[@]}" -c "$source" -o "$object"
+        fi
+    done
+    version=$(sed -n 's/^## \([0-9][0-9.]*\).*/\1/p' CHANGELOG.md | head -1)
+    "$CXX" -std=c++20 -O2 -g -Wall -Wextra -Werror -DSOTC_VERSION="\"${version:-dev}\"" -I$imgui -I$imgui/backends \
+        -Igpu/third_party/stb "${includes[@]}" launcher/linux/sotc_launcher.cpp out/launcher/*.o "${libraries[@]}" \
+        -o out/sotc-launcher
+    echo "Built $PWD/out/sotc-launcher"
+fi
 if [[ ${1:-} == --test ]]; then
     "$CC" -std=c11 -O2 -g -Wall -Wextra -Werror -pthread "${includes[@]}" -I. -Isrc tests/test_pad.c "${libraries[@]}" -o out/pad-test
     out/pad-test

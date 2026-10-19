@@ -27,13 +27,23 @@ find "$app/scripts" -name __pycache__ -prune -exec rm -rf {} +
 install -m755 out/bb-probe "$app/bin/"
 install -m755 out/gpu/libbbgpu.so "$app/bin/gpu/"
 strip --strip-debug "$app/bin/bb-probe" "$app/bin/gpu/libbbgpu.so"
+# The launcher (launcher/linux), its font, the GPU check it runs and the game search it uses.
+binaries=(out/bb-probe out/gpu/libbbgpu.so)
+if [[ -f out/sotc-launcher ]]; then
+    install -m755 out/sotc-launcher out/bb-gpu-capabilities "$app/bin/"
+    strip --strip-debug "$app/bin/sotc-launcher" "$app/bin/bb-gpu-capabilities"
+    mkdir -p "$app/bin/fonts" "$app/launcher"
+    install -m644 gpu/third_party/fonts/DejaVuSans.ttf gpu/third_party/fonts/LICENSE-DejaVu.txt "$app/bin/fonts/"
+    install -m644 launcher/sotc_discovery.py launcher/sotc.png "$app/launcher/"
+    binaries+=(out/sotc-launcher)
+fi
 
 # Every library the two binaries load, except the base system and the port's own GPU library.
 host='^(linux-vdso|ld-linux-x86-64|libc|libm|libdl|librt|libpthread|libresolv|libstdc\+\+|libgcc_s|libvulkan)\.so'
 while read -r name path; do
     [[ $name =~ $host || $path == */out/gpu/* ]] && continue
     cp -L "$path" "$app/lib/$name"
-done < <(ldd out/bb-probe out/gpu/libbbgpu.so | awk '$2 == "=>" && $3 ~ /^\// {print $1, $3}' | sort -u)
+done < <(ldd "${binaries[@]}" | awk '$2 == "=>" && $3 ~ /^\// {print $1, $3}' | sort -u)
 count=$(find "$app/lib" -type f | wc -l)
 if (( count > 25 )); then
     echo "Warning: $count bundled libraries; the system FFmpeg pulls in many. For a small, portable" >&2
@@ -42,6 +52,7 @@ fi
 strip --strip-unneeded "$app"/lib/*
 patchelf --set-rpath '$ORIGIN/gpu:$ORIGIN/../lib' "$app/bin/bb-probe"
 patchelf --set-rpath '$ORIGIN/../../lib' "$app/bin/gpu/libbbgpu.so"
+[[ -f $app/bin/sotc-launcher ]] && patchelf --set-rpath '$ORIGIN/../lib' "$app/bin/sotc-launcher"
 for library in "$app"/lib/*; do patchelf --set-rpath '$ORIGIN' "$library"; done
 
 install -m644 launcher/sotc.png "$appdir/sotc-pc.png"
