@@ -216,17 +216,19 @@ bash packaging/linux/build_ffmpeg.sh        # out/ffmpeg (uma vez / once)
 bash packaging/linux/build_appimage.sh      # dist/SotC-PC-<versão>-linux-x86_64.AppImage
 ```
 
-**Ubuntu 24.04:** o GCC 13, o SDL e os headers do Vulkan do sistema são antigos / the system
-GCC 13, SDL and Vulkan headers are too old:
+**Ubuntu 24.04:** o GCC 13, o SDL, os headers do Vulkan e o VulkanMemoryAllocator do sistema
+são antigos (o código usa `vmaGetAllocationInfo2`, do VMA 3.1+; o Ubuntu traz o 3.0) / the system
+GCC 13, SDL, Vulkan headers and VulkanMemoryAllocator are too old (the code uses
+`vmaGetAllocationInfo2`, VMA 3.1+; Ubuntu ships 3.0):
 
 ```
 sudo apt install build-essential gcc-14 g++-14 cmake ninja-build pkg-config python3 python3-tk git nasm \
-    patchelf libvulkan-dev glslang-tools libvulkan-memory-allocator-dev libfmt-dev libboost-dev \
+    patchelf libvulkan-dev glslang-tools libfmt-dev libboost-dev \
     libxxhash-dev libzydis-dev libx11-dev libxext-dev libwayland-dev libxkbcommon-dev \
     libpulse-dev libasound2-dev
-# SDL3, Vulkan-Headers e / and robin-map da fonte / from source (cmake + install):
+# SDL3, Vulkan-Headers, VulkanMemoryAllocator e / and robin-map da fonte / from source (cmake + install):
 #   https://github.com/libsdl-org/SDL (release-3.2.x), https://github.com/KhronosGroup/Vulkan-Headers,
-#   https://github.com/Tessil/robin-map
+#   https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator, https://github.com/Tessil/robin-map
 bash packaging/linux/build_ffmpeg.sh
 CC=gcc-14 CXX=g++-14 CPATH=/usr/local/include ./build.sh
 bash packaging/linux/build_appimage.sh
