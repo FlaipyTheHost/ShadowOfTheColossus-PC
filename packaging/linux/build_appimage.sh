@@ -84,6 +84,9 @@ if (( count > 25 )); then
 fi
 bundle "$python/bin/python3" "$stdlib"/lib-dynload/*.so
 count=$(find "$app/lib" -type f | wc -l)
+# The copies keep the host's modes, and some distributions install libraries read-only (Fedora's
+# libtcl is 0555): strip and patchelf below rewrite them.
+chmod u+w "$app"/lib/* "$stdlib"/lib-dynload/*.so
 strip --strip-unneeded "$app"/lib/*
 patchelf --set-rpath '$ORIGIN/gpu:$ORIGIN/../lib' "$app/bin/bb-probe"
 patchelf --set-rpath '$ORIGIN/../lib' "$app/bin/bb-gpu-capabilities"
