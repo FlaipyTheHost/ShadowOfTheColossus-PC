@@ -42,6 +42,15 @@ using namespace Xbyak::util;
 
 namespace Core {
 
+// Zydis 5 removed disp.has_displacement: a displacement is there when its encoded size is not 0.
+static bool HasDisplacement(const ZydisDecodedOperandMem& mem) {
+#if ZYDIS_VERSION >= 0x0005000000000000ULL
+    return mem.disp.size != 0;
+#else
+    return mem.disp.has_displacement;
+#endif
+}
+
 static Xbyak::Reg ZydisToXbyakRegister(const ZydisRegister reg) {
     if (reg >= ZYDIS_REGISTER_EAX && reg <= ZYDIS_REGISTER_R15D) {
         return Xbyak::Reg32(reg - ZYDIS_REGISTER_EAX + Xbyak::Operand::EAX);
@@ -84,7 +93,7 @@ static Xbyak::Address ZydisToXbyakMemoryOperand(const ZydisDecodedOperand& opera
             expression = expression + ZydisToXbyakRegister(operand.mem.index);
         }
     }
-    if (operand.mem.disp.has_displacement /* sotc: Zydis 4.0 */ && operand.mem.disp.value != 0) {
+    if (HasDisplacement(operand.mem) && operand.mem.disp.value != 0) {
         expression = expression + operand.mem.disp.value;
     }
 
@@ -1090,7 +1099,7 @@ DecodedCodeInstruction DecodeCodeInstruction(uintptr_t address, uintptr_t end) {
     for (u8 index = 0; index < decoded.instruction.operand_count_visible; ++index) {
         const auto& operand = decoded.operands[index];
         if (operand.type != ZYDIS_OPERAND_TYPE_MEMORY ||
-            !IsStackPointerRegister(operand.mem.base) || !operand.mem.disp.has_displacement ||
+            !IsStackPointerRegister(operand.mem.base) || !HasDisplacement(operand.mem) ||
             operand.mem.disp.value >= 0) {
             continue;
         }
